@@ -10,6 +10,8 @@ public class TicTacToe {
     private final List<Integer> TILES;
     private int userPickedIndex;
 
+    private final Random rand = new Random();
+
     public TicTacToe() {
         this.TILES = Arrays.asList(new Integer[9]);
         Collections.fill(TILES, 0);
@@ -20,32 +22,29 @@ public class TicTacToe {
         int targetIndex = indexToOpen - 1;
         // Check if tile is already open
         if(TILES.get(targetIndex) == USER_TILE || TILES.get(targetIndex) == ENEMY_TILE) throw new IllegalArgumentException("This tile is already open");
-        this.userPickedIndex = targetIndex;
-        TILES.set(targetIndex, USER_TILE);
-    }
 
-    public int randNum() {
-        return new Random().nextInt(1, 9);
+        this.userPickedIndex = targetIndex; // Getting the player choosed index to be used in getComputerIndex decision
+        TILES.set(targetIndex, USER_TILE);
     }
 
     public void computerTurn(int indexToOpen) {
         if(isDraw()) return;
-        if (indexToOpen <= 0 || indexToOpen > 9) throw new IllegalArgumentException("Please select only between 1 and 9");
+        if (indexToOpen < 0 || indexToOpen > 9) throw new IllegalArgumentException("Please select only between 1 and 9");
 
         int blockingIndex = this.getBlockingIndex();
         if (blockingIndex != DEFAULT_BLOCKING_INDEX && !this.isTileAlreadyOpen(blockingIndex)) {
             TILES.set(blockingIndex, ENEMY_TILE);
-            LOG.info("USER BLOCKED!");
+            LOG.fine("USER BLOCKED!");
             return;
         }
 
-        int targetIndex = indexToOpen - 1;
-        if(this.isTileAlreadyOpen(targetIndex)) {
-            this.computerTurn(this.getComputerIndex()); // replace this with the initially blocked index
+        if (this.isTileAlreadyOpen(indexToOpen)) {
+            computerTurn(this.getComputerIndex());
+            LOG.fine("Computer is picking another index");
             return;
         }
 
-        TILES.set(targetIndex, ENEMY_TILE);
+        TILES.set(indexToOpen, ENEMY_TILE);
     }
 
     public boolean isTileAlreadyOpen(int index) {
@@ -53,7 +52,7 @@ public class TicTacToe {
     }
 
     public boolean isDraw() {
-        return TILES.stream().noneMatch(tile -> tile == 0);
+        return TILES.stream().noneMatch(tile -> tile == 0) || TILES.stream().filter(tile -> tile == 0).count() <= 1;
     }
 
     public List<List<Integer>> getCombinations() {
@@ -84,35 +83,13 @@ public class TicTacToe {
                 .toList();
 
         // Pick a combination pattern based on player picked index
-        List<Integer> possibleCombination = this.pickACombinationPattern(possiblePlayerCombinations);
-
-        // Pick an index
-        return this.pickIndex(possibleCombination);
-    }
-
-    public List<Integer> pickACombinationPattern(List<List<Integer>> possiblePlayerCombinations) {
-        int pickANumber = new Random().nextInt(possiblePlayerCombinations.size() - 1);
+        int pickANumber = rand.nextInt(possiblePlayerCombinations.size() - 1);
         List<Integer> possibleCombination = possiblePlayerCombinations.get(pickANumber);
 
-        boolean isAllTileOpen = possibleCombination.stream()
-                .map(TILES::get)
-                .noneMatch(tile -> tile == 0);
-
-        if (isAllTileOpen) {
-            LOG.info("Computer is picking another combination pattern");
-            return pickACombinationPattern(possiblePlayerCombinations);
-        }
-        return possibleCombination;
-    }
-
-    public int pickIndex(List<Integer> possibleCombination) {
-        int randomIndex = new Random().nextInt(possibleCombination.size() - 1);
+        // Pick a index
+        int randomIndex = rand.nextInt(possibleCombination.size() - 1);
         int pickedIndex = possibleCombination.get(randomIndex);
-
-        if (this.isTileAlreadyOpen(pickedIndex)) {
-            LOG.info("Computer is picking another index!");
-            return pickIndex(possibleCombination);
-        }
+        LOG.fine("Computer picked index " + pickedIndex);
         return pickedIndex;
     }
 
