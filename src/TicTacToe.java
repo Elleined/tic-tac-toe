@@ -1,9 +1,12 @@
 import java.util.*;
+import java.util.logging.Logger;
 
 public class TicTacToe {
 
+    private final static Logger LOG = Logger.getLogger(TicTacToe.class.getName());
     private final static int USER_TILE = 1;
     private final static int ENEMY_TILE = 2;
+    private final static int DEFAULT_BLOCKING_INDEX = 10;
     private final List<Integer> TILES;
 
     public TicTacToe() {
@@ -26,13 +29,25 @@ public class TicTacToe {
     public void computerTurn(int indexToOpen) {
         if(isDraw()) return;
         if (indexToOpen <= 0 || indexToOpen > 9) throw new IllegalArgumentException("Please select only between 1 and 9");
+
+        int blockingIndex = this.getBlockingIndex();
+        if (blockingIndex != DEFAULT_BLOCKING_INDEX && !this.isTileAlreadyOpen(blockingIndex)) {
+            TILES.set(blockingIndex, ENEMY_TILE);
+            LOG.info("USER BLOCKED!");
+            return;
+        }
+
         int targetIndex = indexToOpen - 1;
-        // Check if tiles is already open
-        if(TILES.get(targetIndex) == USER_TILE || TILES.get(targetIndex) == ENEMY_TILE) {
+        if(this.isTileAlreadyOpen(targetIndex)) {
             this.computerTurn(randNum());
             return;
         }
+
         TILES.set(targetIndex, ENEMY_TILE);
+    }
+
+    public boolean isTileAlreadyOpen(int index) {
+        return TILES.get(index) == USER_TILE || TILES.get(index) == ENEMY_TILE;
     }
 
     public boolean isDraw() {
@@ -62,7 +77,7 @@ public class TicTacToe {
 
     public int getBlockingIndex() {
         List<List<Integer>> combinations = this.getCombinations();
-        int blockingIndex = 0;
+        int blockingIndex = DEFAULT_BLOCKING_INDEX;
         for (List<Integer> indexes : combinations) {
             long patternCount = indexes.stream()
                     .map(TILES::get) // return the contained element of the index
@@ -71,7 +86,7 @@ public class TicTacToe {
 
             // Get the remaining index of pattern to block the winning pattern
             if (patternCount == 2) {
-                blockingIndex =   indexes.stream()
+                blockingIndex = indexes.stream()
                         .filter(index -> TILES.get(index) != USER_TILE)
                         .findFirst()
                         .orElseThrow();

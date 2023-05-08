@@ -1,5 +1,4 @@
-import java.util.*;
-import java.util.stream.*;
+import java.util.Scanner;
 public class Main {
     public static void main(String[] args) {
         TicTacToe game = new TicTacToe();
@@ -8,14 +7,14 @@ public class Main {
             System.out.print("Open a tile: ");
             int userInput = in.nextInt();
             game.makeTurn(userInput);
-
             if(game.hasWinner()) break;
+
             game.computerTurn(game.randNum());
-            game.getBlockingIndex();
+
             game.showTiles();
+
             if(game.hasWinner()) break;
             if(game.isDraw()) break;
-
         }
     }
 }
