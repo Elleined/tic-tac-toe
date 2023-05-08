@@ -9,7 +9,7 @@ public class Main {
             game.makeTurn(userInput);
             if(game.hasWinner()) break;
 
-            game.computerTurn(game.randNum());
+            game.computerTurn(game.getComputerIndex());
 
             game.showTiles();
 

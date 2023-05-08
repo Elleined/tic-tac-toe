@@ -8,6 +8,7 @@ public class TicTacToe {
     private final static int ENEMY_TILE = 2;
     private final static int DEFAULT_BLOCKING_INDEX = 10;
     private final List<Integer> TILES;
+    private int userPickedIndex;
 
     public TicTacToe() {
         this.TILES = Arrays.asList(new Integer[9]);
@@ -19,6 +20,7 @@ public class TicTacToe {
         int targetIndex = indexToOpen - 1;
         // Check if tile is already open
         if(TILES.get(targetIndex) == USER_TILE || TILES.get(targetIndex) == ENEMY_TILE) throw new IllegalArgumentException("This tile is already open");
+        this.userPickedIndex = targetIndex;
         TILES.set(targetIndex, USER_TILE);
     }
 
@@ -39,7 +41,7 @@ public class TicTacToe {
 
         int targetIndex = indexToOpen - 1;
         if(this.isTileAlreadyOpen(targetIndex)) {
-            this.computerTurn(randNum());
+            this.computerTurn(this.getComputerIndex()); // replace this with the initially blocked index
             return;
         }
 
@@ -70,9 +72,48 @@ public class TicTacToe {
     public boolean hasWinner() {
         return this.getCombinations()
                 .stream()
-                .anyMatch(indexes -> hasPatternOf(USER_TILE, indexes)
-                        || hasPatternOf(ENEMY_TILE, indexes)
-                );
+                .anyMatch(indexes -> hasPatternOf(USER_TILE, indexes) || hasPatternOf(ENEMY_TILE, indexes));
+    }
+
+    public int getComputerIndex() {
+        List<List<Integer>> combinations = this.getCombinations();
+
+        // Get the possible player winning combinations
+        List<List<Integer>> possiblePlayerCombinations = combinations.stream()
+                .filter(list -> list.contains(this.userPickedIndex))
+                .toList();
+
+        // Pick a combination pattern based on player picked index
+        List<Integer> possibleCombination = this.pickACombinationPattern(possiblePlayerCombinations);
+
+        // Pick an index
+        return this.pickIndex(possibleCombination);
+    }
+
+    public List<Integer> pickACombinationPattern(List<List<Integer>> possiblePlayerCombinations) {
+        int pickANumber = new Random().nextInt(possiblePlayerCombinations.size() - 1);
+        List<Integer> possibleCombination = possiblePlayerCombinations.get(pickANumber);
+
+        boolean isAllTileOpen = possibleCombination.stream()
+                .map(TILES::get)
+                .noneMatch(tile -> tile == 0);
+
+        if (isAllTileOpen) {
+            LOG.info("Computer is picking another combination pattern");
+            return pickACombinationPattern(possiblePlayerCombinations);
+        }
+        return possibleCombination;
+    }
+
+    public int pickIndex(List<Integer> possibleCombination) {
+        int randomIndex = new Random().nextInt(possibleCombination.size() - 1);
+        int pickedIndex = possibleCombination.get(randomIndex);
+
+        if (this.isTileAlreadyOpen(pickedIndex)) {
+            LOG.info("Computer is picking another index!");
+            return pickIndex(possibleCombination);
+        }
+        return pickedIndex;
     }
 
     public int getBlockingIndex() {
